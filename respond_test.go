@@ -1,6 +1,7 @@
 package respond_test
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -72,6 +73,27 @@ func TestReponses(t *testing.T) {
 			assertIsJSON(t, rr)
 		})
 	}
+}
+
+func TestBadRequestReponse_ErrorFormatter(t *testing.T) {
+
+	handler := func(w http.ResponseWriter, r *http.Request) { respond.BadRequest(w, newFormatterBadRequest()) }
+
+	rr := httptest.NewRecorder()
+	handler(rr, builRequest(t))
+	assertBadRequest(t, rr)
+	assertIsJSON(t, rr)
+
+	responseMap := transform(t, rr)
+
+	if code, ok := responseMap["code"]; !ok {
+		t.Errorf("expected key `code`: got nil")
+	} else {
+		if code.(float64) != 3 {
+			t.Errorf("handler returned wrong code: got %v want %v", code, 3)
+		}
+	}
+
 }
 
 func TestResponseContentType(t *testing.T) {
@@ -166,4 +188,35 @@ func assertIsJSON(t *testing.T, w http.ResponseWriter) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			w.Header().Get("Content-Type"), "application/json")
 	}
+}
+
+func transform(t *testing.T, rr *httptest.ResponseRecorder) map[string]interface{} {
+	responseMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+	if err != nil {
+		t.Errorf("Cannot convert to json: %v", err)
+	}
+
+	return responseMap
+}
+
+func newFormatterBadRequest() *formatterBadRequest {
+	return new(formatterBadRequest)
+}
+
+type formatterBadRequest struct {
+	respond.ErrorDescriptor
+}
+
+func (formatterBadRequest) Code() int {
+	return 3
+}
+
+func (formatterBadRequest) Error() string {
+	return "bad Request"
+}
+
+func (formatterBadRequest) Description() *string {
+	val := "some description here"
+	return &val
 }

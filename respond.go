@@ -115,11 +115,11 @@ func Error(w http.ResponseWriter, err error) {
 	w.Write([]byte(err.Error()))
 }
 
-func asJSON(w http.ResponseWriter, statusCode int, stream interface{}) {
+func asJSON(w http.ResponseWriter, statusCode int, stream []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	if doesRequireContent(statusCode) {
+	if doesNotRequireContent(statusCode) {
 		return
 	}
 
@@ -127,12 +127,7 @@ func asJSON(w http.ResponseWriter, statusCode int, stream interface{}) {
 		return
 	}
 
-	bytes, err := getBytes(stream)
-	if err != nil {
-		return
-	}
-
-	w.Write(bytes)
+	w.Write(stream)
 }
 
 func file(w http.ResponseWriter, stream []byte, contentType string) {
@@ -148,8 +143,8 @@ func file(w http.ResponseWriter, stream []byte, contentType string) {
 	}
 }
 
-func doesRequireContent(statusCode int) bool {
-	return !in(emptyStatus, statusCode)
+func doesNotRequireContent(statusCode int) bool {
+	return in(emptyStatus, statusCode)
 }
 
 // in checks if a given value exists in an array
@@ -170,13 +165,31 @@ func in(items, item interface{}) bool {
 	return false
 }
 
-func getMessage(err error) *string {
+func getMessage(err error) []byte {
 	if err == nil {
 		return nil
 	}
 
-	message := err.Error()
-	return &message
+	if value, ok := err.(ErrorFormatter); ok {
+
+		data := map[string]interface{}{"code": value.Code(), "message": value.Error()}
+		if value.Description() != nil {
+			data["description"] = value.Description()
+		}
+
+		if value.InfoURL() != nil {
+			data["info_url"] = value.InfoURL()
+		}
+
+		response, err := json.Marshal(data)
+		if err != nil {
+			return []byte(err.Error())
+		}
+
+		return response
+	}
+
+	return []byte(err.Error())
 }
 
 func getBytes(key interface{}) ([]byte, error) {
