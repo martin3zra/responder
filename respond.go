@@ -69,22 +69,26 @@ func Excel(w http.ResponseWriter, stream []byte) {
 	w.Write([]byte(""))
 }
 
-//NotFound ...
+//NotFound is returned when the resource requested by your application does not exist
 func NotFound(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusNotFound, getMessage(err))
 }
 
-//Unauthorized ...
+//Unauthorized is returned when there is a problem with the credentials provided by your application.
+//This code indicates that your application tried to operate on a protected resource without
+//providing the proper authorization. It may have provided the wrong credentials or none at all
 func Unauthorized(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusUnauthorized, getMessage(err))
 }
 
-//Forbidden ...
+//Forbidden is returned when your application is not authorized to access the requested resource,
+//or when your application is being rate limited
 func Forbidden(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusForbidden, getMessage(err))
 }
 
-//BadRequest ...
+//BadRequest is returned when the request entity sent by your application could not
+//be understood by the server due to malformed syntax (e.g. invalid payload, data type mismatch)
 func BadRequest(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusBadRequest, getMessage(err))
 }
@@ -94,12 +98,14 @@ func UnprocessableEntity(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusUnprocessableEntity, getMessage(err))
 }
 
-//Conflict ...
+//Conflict is returned when the request sent by your application could not be completed due to a conflict
+//with the current state of the resource
 func Conflict(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusConflict, getMessage(err))
 }
 
-//Error ...
+//Error is returned when the server encountered an unexpected condition which prevented it from fulfilling
+//the request sent by your application
 func Error(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
