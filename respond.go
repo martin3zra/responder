@@ -2,6 +2,7 @@ package respond
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -70,32 +71,32 @@ func Excel(w http.ResponseWriter, stream []byte) {
 
 //NotFound ...
 func NotFound(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusNotFound, nil)
+	asJSON(w, http.StatusNotFound, getMessage(err))
 }
 
 //Unauthorized ...
 func Unauthorized(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusUnauthorized, nil)
+	asJSON(w, http.StatusUnauthorized, getMessage(err))
 }
 
 //Forbidden ...
 func Forbidden(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusForbidden, nil)
+	asJSON(w, http.StatusForbidden, getMessage(err))
 }
 
 //BadRequest ...
 func BadRequest(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusBadRequest, nil)
+	asJSON(w, http.StatusBadRequest, getMessage(err))
 }
 
 //UnprocessableEntity ...
 func UnprocessableEntity(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusUnprocessableEntity, nil)
+	asJSON(w, http.StatusUnprocessableEntity, getMessage(err))
 }
 
 //Conflict ...
 func Conflict(w http.ResponseWriter, err error) {
-	asJSON(w, http.StatusConflict, nil)
+	asJSON(w, http.StatusConflict, getMessage(err))
 }
 
 //Error ...
@@ -108,14 +109,24 @@ func Error(w http.ResponseWriter, err error) {
 	w.Write([]byte(err.Error()))
 }
 
-func asJSON(w http.ResponseWriter, statusCode int, stream []byte) {
+func asJSON(w http.ResponseWriter, statusCode int, stream interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
 	if doesRequireContent(statusCode) {
 		return
 	}
-	w.Write(stream)
+
+	if stream == nil {
+		return
+	}
+
+	bytes, err := getBytes(stream)
+	if err != nil {
+		return
+	}
+
+	w.Write(bytes)
 }
 
 func file(w http.ResponseWriter, stream []byte, contentType string) {
@@ -151,4 +162,23 @@ func in(items, item interface{}) bool {
 	}
 
 	return false
+}
+
+func getMessage(err error) *string {
+	if err == nil {
+		return nil
+	}
+
+	message := err.Error()
+	return &message
+}
+
+func getBytes(key interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(key)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

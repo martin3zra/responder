@@ -29,6 +29,6 @@ func (w http.ResponseWriter, r *http.Request) {
 	respond.OK(w, data)
 }
 ```
-In this example, we would respond with `http.StatusOK`, content-type of `application/json` and will wrote the data to the buffer.
+In this example, we would respond with `http.StatusOK`, content-type of `application/json` and will write the data to the buffer.
 
 Please check the [respond_test.go](https://github.com/martin3zra/respond/blob/master/respond_test.go) for more samples.
