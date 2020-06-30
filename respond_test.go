@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
@@ -16,7 +17,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitValue)
 }
 
-func TestReponses(t *testing.T) {
+func TestResponses(t *testing.T) {
 	cases := []struct {
 		handler    http.HandlerFunc
 		expectCode func(t *testing.T, w *httptest.ResponseRecorder)
@@ -68,19 +69,19 @@ func TestReponses(t *testing.T) {
 		t.Run(item.name, func(t *testing.T) {
 
 			rr := httptest.NewRecorder()
-			item.handler(rr, builRequest(t))
+			item.handler(rr, buildRequest(t))
 			item.expectCode(t, rr)
 			assertIsJSON(t, rr)
 		})
 	}
 }
 
-func TestBadRequestReponse_ErrorFormatter(t *testing.T) {
+func TestBadRequestResponse_ErrorFormatter(t *testing.T) {
 
 	handler := func(w http.ResponseWriter, r *http.Request) { respond.BadRequest(w, newFormatterBadRequest()) }
 
 	rr := httptest.NewRecorder()
-	handler(rr, builRequest(t))
+	handler(rr, buildRequest(t))
 	assertBadRequest(t, rr)
 	assertIsJSON(t, rr)
 
@@ -123,7 +124,7 @@ func TestResponseContentType(t *testing.T) {
 	for _, item := range cases {
 		t.Run(item.name, func(t *testing.T) {
 			rr := httptest.NewRecorder()
-			item.handler(rr, builRequest(t))
+			item.handler(rr, buildRequest(t))
 
 			if rr.Header().Get("Content-Type") != item.expectContentType {
 				t.Errorf("handler returned wrong status code: got %v want %v",
@@ -135,8 +136,8 @@ func TestResponseContentType(t *testing.T) {
 	}
 }
 
-func builRequest(t *testing.T) *http.Request {
-	req, err := http.NewRequest("GET", "/ok", nil)
+func buildRequest(t *testing.T) *http.Request {
+	req, err := http.NewRequest("GET", "http://localhost/ok", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,6 +151,10 @@ func assertOK(t *testing.T, w *httptest.ResponseRecorder) {
 
 func assertCreated(t *testing.T, w *httptest.ResponseRecorder) {
 	assertStatusCode(t, http.StatusCreated, w.Code)
+	_, err := url.ParseRequestURI(w.Header().Get("location"))
+	if err != nil {
+		t.Fatalf("URL on Location header is not valid.")
+	}
 }
 
 func assertNoContent(t *testing.T, w *httptest.ResponseRecorder) {

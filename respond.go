@@ -36,7 +36,7 @@ func NoContent(w http.ResponseWriter) {
 
 // Created ...
 func Created(w http.ResponseWriter, r *http.Request, resource interface{}) {
-	w.Header().Set("Location", fmt.Sprintf("%s%s/%v", r.Host, r.URL.RequestURI(), resource))
+	w.Header().Set("Location", fmt.Sprintf("%s://%s%s/%v", r.URL.Scheme, r.Host, r.URL.RequestURI(), resource))
 	asJSON(w, http.StatusCreated, nil)
 }
 
