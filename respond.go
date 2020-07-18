@@ -106,13 +106,25 @@ func Conflict(w http.ResponseWriter, err error) {
 
 //Error is returned when the server encountered an unexpected condition which prevented it from fulfilling
 //the request sent by your application
-func Error(w http.ResponseWriter, err error) {
+func InternalServerError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
 	if err == nil {
 		return
 	}
 	w.Write([]byte(err.Error()))
+}
+//Error is returned when the server encountered an unexpected condition which prevented it from fulfilling
+//the request sent by your application
+func Error(w http.ResponseWriter, err error) {
+
+	errValue, ok := err.(ErrorFormatter)
+	if !ok {
+		InternalServerError(w, err)
+		return
+	}
+
+	composeCustomError(w, errValue)
 }
 
 func asJSON(w http.ResponseWriter, statusCode int, stream []byte) {
@@ -200,4 +212,33 @@ func getBytes(key interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func composeCustomError(w http.ResponseWriter, err ErrorFormatter) {
+	switch err.Status() {
+	case http.StatusUnauthorized:
+		Unauthorized(w, err)
+		break
+	case http.StatusForbidden:
+		Forbidden(w, err)
+		break
+	case http.StatusConflict:
+		Conflict(w, err)
+		break
+	case http.StatusUnprocessableEntity:
+		UnprocessableEntity(w, err)
+		break
+	case http.StatusNotFound:
+		NotFound(w, err)
+		break
+	case http.StatusBadRequest:
+		BadRequest(w, err)
+		break
+	case http.StatusInternalServerError:
+		break
+	default:
+		InternalServerError(w, err)
+		break
+	}
+
 }

@@ -1,15 +1,16 @@
 package respond_test
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/martin3zra/respond"
 )
 
-func TestErroFormatter(t *testing.T) {
+func TestErrorFormatter(t *testing.T) {
 
 	var instance interface{}
-	instance = newNotFound()
+	instance =  new(notFound)
 
 	if _, ok := instance.(respond.ErrorFormatter); !ok {
 		t.Errorf("handler returned wrong error: got %v want notFound", instance)
@@ -18,18 +19,28 @@ func TestErroFormatter(t *testing.T) {
 
 func TestErrorDescriptor(t *testing.T) {
 	var instance interface{}
-	instance = newBadRequest()
+	instance = new(badRequest)
 
-	if _, ok := instance.(respond.ErrorFormatter); !ok {
-		t.Errorf("handler returned wrong error: got %v want notFound", instance)
-	}
-}
+	t.Run("implement ErrorFormatter", func(t *testing.T) {
 
-func newNotFound() *notFound {
-	return new(notFound)
+		if _, ok := instance.(respond.ErrorFormatter); !ok {
+			t.Errorf("handler returned wrong error: got %v want notFound", instance)
+		}
+	})
+
+	t.Run("it returns bad request when HTTP Status code is 400", func(t *testing.T) {
+
+		if instance.(respond.ErrorFormatter).Status() != http.StatusBadRequest {
+			t.Errorf("handler returned wrong error: got %d want %d", instance.(respond.ErrorFormatter).Status(), http.StatusBadRequest)
+		}
+	})
 }
 
 type notFound struct {
+}
+
+func (notFound) Status() int {
+	return http.StatusNotFound
 }
 
 func (notFound) Code() int {
@@ -50,12 +61,12 @@ func (notFound) InfoURL() *string {
 	return &info
 }
 
-func newBadRequest() *badRequest {
-	return new(badRequest)
-}
-
 type badRequest struct {
 	respond.ErrorDescriptor
+}
+
+func (badRequest) Status() int {
+	return http.StatusBadRequest
 }
 
 func (badRequest) Code() int {

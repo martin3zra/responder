@@ -1,7 +1,11 @@
 package respond
 
+import "net/http"
+
 //ErrorFormatter response format
 type ErrorFormatter interface {
+	// An integer HTTP Status code error
+	Status() int
 	// An integer coding the error type
 	Code() int
 	// A short localized string that describes the error
@@ -18,6 +22,13 @@ type ErrorFormatter interface {
 
 //ErrorDescriptor to be embedded
 type ErrorDescriptor struct{}
+
+//Status (optional) HTTP Status code.
+//It can contain precise information about which
+//HTTP Status code correspond the error
+func (ErrorDescriptor) Status() int {
+	return http.StatusInternalServerError
+}
 
 //Description (optional) A long localized error description if needed.
 //It can contain precise information about which
