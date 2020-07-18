@@ -40,6 +40,10 @@ we also an ***error formatter*** [error.go](https://github.com/martin3zra/respon
 ```go
 type NotFound struct {}
 
+func (NotFound) Status() int {
+    return http.StatusNotFound 
+}
+
 func (NotFound) Code() int {
 	return 40401
 }
@@ -74,6 +78,11 @@ As the methods `Description` and `InfoURL` are optional the resolver will ignore
 ```go
 type NotFound struct {
 	respond.ErrorDescriptor
+}
+
+//If you want a specific status code just implement Status()
+func (NotFound) Status() int {
+    return http.StatusNotFound 
 }
 
 func (NotFound) Code() int {
