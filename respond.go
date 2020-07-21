@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 //emptyStatus a collection of http status code doesn't need a body as response
@@ -35,8 +36,8 @@ func NoContent(w http.ResponseWriter) {
 }
 
 // Created ...
-func Created(w http.ResponseWriter, r *http.Request, resource interface{}) {
-	w.Header().Set("Location", fmt.Sprintf("%s://%s%s/%v", r.URL.Scheme, r.Host, r.URL.RequestURI(), resource))
+func Created(w http.ResponseWriter, location string) {
+	w.Header().Set("Location", location)
 	asJSON(w, http.StatusCreated, nil)
 }
 
@@ -241,4 +242,34 @@ func composeCustomError(w http.ResponseWriter, err ErrorFormatter) {
 		break
 	}
 
+}
+
+func BuildLocationURL(r *http.Request, resource interface{}) string {
+	return fmt.Sprintf("%s://%s%s/%v", r.URL.Scheme, r.Host, r.URL.RequestURI(), resource)
+}
+
+func buildHost(r *http.Request) string {
+	return fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host)
+}
+
+type uriComponentsBuilder struct {
+	request *http.Request
+	path    string
+}
+
+func NewUriComponentsBuilder(r *http.Request) *uriComponentsBuilder {
+	return &uriComponentsBuilder{request: r}
+}
+
+func (u *uriComponentsBuilder) Path(path string) {
+	u.path = path
+}
+
+func (u *uriComponentsBuilder) ToURI() string {
+
+	if !strings.HasPrefix(u.path, "/") {
+		u.path = "/" + u.path
+	}
+
+	return fmt.Sprintf("%s%s", buildHost(u.request), u.path)
 }

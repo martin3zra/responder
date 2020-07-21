@@ -3,6 +3,7 @@ package respond_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -29,7 +30,9 @@ func TestResponses(t *testing.T) {
 			name:       "it returns http status 200 when respond OK",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.Created(w, r, 10) },
+			handler:    func(w http.ResponseWriter, r *http.Request) {
+				respond.Created(w,  fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host))
+			},
 			expectCode: assertCreated,
 			name:       "it returns http status 201 when respond created",
 		},
