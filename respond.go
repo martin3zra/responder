@@ -105,7 +105,7 @@ func Conflict(w http.ResponseWriter, err error) {
 	asJSON(w, http.StatusConflict, getMessage(err))
 }
 
-//Error is returned when the server encountered an unexpected condition which prevented it from fulfilling
+//InternalServerError is returned when the server encountered an unexpected condition which prevented it from fulfilling
 //the request sent by your application
 func InternalServerError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
@@ -244,12 +244,21 @@ func composeCustomError(w http.ResponseWriter, err ErrorFormatter) {
 
 }
 
+//BuildLocationURL returns a representation of the URL to find the created resource
 func BuildLocationURL(r *http.Request, resource interface{}) string {
-	return fmt.Sprintf("%s://%s%s/%v", r.URL.Scheme, r.Host, r.URL.RequestURI(), resource)
+	protocol := "http"
+	if r.TLS != nil {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://%s%s/%v", protocol, r.Host, r.URL.RequestURI(), resource)
 }
 
 func buildHost(r *http.Request) string {
-	return fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host)
+	protocol := "http"
+	if r.TLS != nil {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://%s", protocol, r.Host)
 }
 
 type uriComponentsBuilder struct {
