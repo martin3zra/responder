@@ -32,24 +32,12 @@ func (response *HttpResponse) emptyStatus() []int {
 }
 
 // OK respond with http.StatusOK
-func (response *HttpResponse) OK(payload interface{}) {
+func (response *HttpResponse) OK(payload map[string]interface{}) {
 
+	if payload != nil {
+		payload["flash"] = response.attributes
+	}
 	res, err := json.Marshal(payload)
-	if err != nil {
-		response.writer.WriteHeader(http.StatusInternalServerError)
-		response.writer.Write([]byte(err.Error()))
-		return
-	}
-
-	var child map[string]interface{}
-	json.Unmarshal(res, &child)
-
-	data := map[string]interface{}{
-		"data":  child,
-		"flash": response.attributes,
-	}
-
-	res, err = json.Marshal(data)
 	if err != nil {
 		response.writer.WriteHeader(http.StatusInternalServerError)
 		response.writer.Write([]byte(err.Error()))
