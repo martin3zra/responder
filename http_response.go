@@ -33,11 +33,12 @@ func (response *HttpResponse) emptyStatus() []int {
 
 // OK respond with http.StatusOK
 func (response *HttpResponse) OK(payload map[string]interface{}) {
-
-	if payload != nil {
-		payload["flash"] = response.attributes
+	data := map[string]interface{}{
+		"data":  payload,
+		"flash": response.attributes,
 	}
-	res, err := json.Marshal(payload)
+
+	res, err := json.Marshal(data)
 	if err != nil {
 		response.writer.WriteHeader(http.StatusInternalServerError)
 		response.writer.Write([]byte(err.Error()))
