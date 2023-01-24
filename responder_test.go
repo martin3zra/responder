@@ -1,16 +1,15 @@
-package respond_test
+package responder_test
 
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"testing"
 
-	"github.com/martin3zra/respond"
+	"github.com/martin3zra/responder"
 )
 
 func TestMain(m *testing.M) {
@@ -25,44 +24,74 @@ func TestResponses(t *testing.T) {
 		name       string
 	}{
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.OK(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.With("error", "resource can not be created!").OK(nil)
+			},
 			expectCode: assertOK,
 			name:       "it returns http status 200 when respond OK",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) {
-				respond.Created(w,  fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host))
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.With("success", "resource created successfully!").OK(map[string]interface{}{"customer": "Henry"})
+			},
+			expectCode: assertOK,
+			name:       "it returns http status 200 when respond OK",
+		},
+		{
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.Created(r, 1)
 			},
 			expectCode: assertCreated,
 			name:       "it returns http status 201 when respond created",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.NoContent(w) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.NoContent()
+			},
 			expectCode: assertNoContent,
 			name:       "it returns http status 204 when respond no content",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.BadRequest(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.BadRequest(nil)
+			},
 			expectCode: assertBadRequest,
 			name:       "it returns http status 400 when respond bad request",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.Conflict(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.Conflict(nil)
+			},
 			expectCode: assertConflict,
 			name:       "it returns http status 409 when respond conflict",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.NotFound(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.NotFound(nil)
+			},
 			expectCode: assertNotFound,
 			name:       "it returns http status 404 when respond not found",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.UnprocessableEntity(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.UnprocessableEntity(nil)
+			},
 			expectCode: assertUnprocessableEntity,
 			name:       "it returns http status 422 when respond unprocessable entity",
 		},
 		{
-			handler:    func(w http.ResponseWriter, r *http.Request) { respond.Error(w, errors.New("some error")) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.Error(errors.New("some error"))
+			},
 			expectCode: assertInternalError,
 			name:       "it returns http status 500 when respond error",
 		},
@@ -81,7 +110,10 @@ func TestResponses(t *testing.T) {
 
 func TestBadRequestResponse_ErrorFormatter(t *testing.T) {
 
-	handler := func(w http.ResponseWriter, r *http.Request) { respond.BadRequest(w, newFormatterBadRequest()) }
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		respond := responder.New(w)
+		respond.BadRequest(newFormatterBadRequest())
+	}
 
 	rr := httptest.NewRecorder()
 	handler(rr, buildRequest(t))
@@ -108,17 +140,26 @@ func TestResponseContentType(t *testing.T) {
 		name              string
 	}{
 		{
-			handler:           func(w http.ResponseWriter, r *http.Request) { respond.PDF(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.PDF(nil)
+			},
 			expectContentType: "application/pdf",
 			name:              "it returns application/pdf when respond PDF",
 		},
 		{
-			handler:           func(w http.ResponseWriter, r *http.Request) { respond.Plain(w, nil, "name") },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.Plain(nil, "name")
+			},
 			expectContentType: "application/plain",
 			name:              "it returns application/plain when respond Plain",
 		},
 		{
-			handler:           func(w http.ResponseWriter, r *http.Request) { respond.Excel(w, nil) },
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				respond := responder.New(w)
+				respond.Excel(nil)
+			},
 			expectContentType: "application/octet-stream",
 			name:              "it returns application/octet-stream when respond Excel",
 		},
@@ -200,7 +241,7 @@ func assertIsJSON(t *testing.T, w http.ResponseWriter) {
 
 func transform(t *testing.T, rr *httptest.ResponseRecorder) map[string]interface{} {
 	responseMap := make(map[string]interface{})
-	err := json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+	err := json.Unmarshal(rr.Body.Bytes(), &responseMap)
 	if err != nil {
 		t.Errorf("Cannot convert to json: %v", err)
 	}
@@ -213,7 +254,7 @@ func newFormatterBadRequest() *formatterBadRequest {
 }
 
 type formatterBadRequest struct {
-	respond.ErrorDescriptor
+	responder.ErrorDescriptor
 }
 
 func (formatterBadRequest) Code() int {

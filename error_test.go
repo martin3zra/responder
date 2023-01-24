@@ -1,37 +1,35 @@
-package respond_test
+package responder_test
 
 import (
 	"net/http"
 	"testing"
 
-	"github.com/martin3zra/respond"
+	"github.com/martin3zra/responder"
 )
 
 func TestErrorFormatter(t *testing.T) {
 
-	var instance interface{}
-	instance =  new(notFound)
+	var instance interface{} = new(notFound)
 
-	if _, ok := instance.(respond.ErrorFormatter); !ok {
+	if _, ok := instance.(responder.ErrorFormatter); !ok {
 		t.Errorf("handler returned wrong error: got %v want notFound", instance)
 	}
 }
 
 func TestErrorDescriptor(t *testing.T) {
-	var instance interface{}
-	instance = new(badRequest)
+	var instance interface{} = new(badRequest)
 
 	t.Run("implement ErrorFormatter", func(t *testing.T) {
 
-		if _, ok := instance.(respond.ErrorFormatter); !ok {
+		if _, ok := instance.(responder.ErrorFormatter); !ok {
 			t.Errorf("handler returned wrong error: got %v want notFound", instance)
 		}
 	})
 
 	t.Run("it returns bad request when HTTP Status code is 400", func(t *testing.T) {
 
-		if instance.(respond.ErrorFormatter).Status() != http.StatusBadRequest {
-			t.Errorf("handler returned wrong error: got %d want %d", instance.(respond.ErrorFormatter).Status(), http.StatusBadRequest)
+		if instance.(responder.ErrorFormatter).Status() != http.StatusBadRequest {
+			t.Errorf("handler returned wrong error: got %d want %d", instance.(responder.ErrorFormatter).Status(), http.StatusBadRequest)
 		}
 	})
 }
@@ -62,7 +60,7 @@ func (notFound) InfoURL() *string {
 }
 
 type badRequest struct {
-	respond.ErrorDescriptor
+	responder.ErrorDescriptor
 }
 
 func (badRequest) Status() int {

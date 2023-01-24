@@ -1,3 +1,3 @@
-module github.com/martin3zra/respond
+module github.com/martin3zra/responder
 
-go 1.14
+go 1.16
