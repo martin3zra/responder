@@ -27,7 +27,7 @@ func (res *Respond) With(name string, value interface{}) *HttpResponse {
 }
 
 // OK respond with http.StatusOK
-func (res *Respond) OK(payload map[string]interface{}) {
+func (res *Respond) OK(payload interface{}) {
 	res.response.OK(payload)
 }
 

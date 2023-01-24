@@ -32,7 +32,7 @@ func (response *HttpResponse) emptyStatus() []int {
 }
 
 // OK respond with http.StatusOK
-func (response *HttpResponse) OK(payload map[string]interface{}) {
+func (response *HttpResponse) OK(payload interface{}) {
 	data := map[string]interface{}{
 		"data":  payload,
 		"flash": response.attributes,
