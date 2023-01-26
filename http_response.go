@@ -35,7 +35,7 @@ func (response *HttpResponse) emptyStatus() []int {
 // OK respond with http.StatusOK
 func (response *HttpResponse) OK(payload interface{}) {
 	for k, v := range response.attributes {
-		c := &http.Cookie{Name: k, Value: base64.URLEncoding.EncodeToString([]byte(v))}
+		c := &http.Cookie{Name: k, Value: base64.URLEncoding.EncodeToString([]byte(v)), SameSite: http.SameSiteLaxMode, HttpOnly: true, Path: "/"}
 		http.SetCookie(response.writer, c)
 	}
 
