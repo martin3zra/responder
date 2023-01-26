@@ -8,7 +8,7 @@ import (
 
 // NEW return a new instance of the Respond object
 func New(w http.ResponseWriter) *Respond {
-	response := newHttpResponse(w, make(map[string]interface{}))
+	response := newHttpResponse(w, make(map[string]string))
 	return &Respond{w: w, response: response}
 }
 
@@ -19,8 +19,8 @@ type Respond struct {
 }
 
 // With allow you set flash message
-func (res *Respond) With(name string, value interface{}) *HttpResponse {
-	res.response.setAttributes(map[string]interface{}{
+func (res *Respond) With(name, value string) *HttpResponse {
+	res.response.setAttributes(map[string]string{
 		name: value,
 	})
 	return res.response

@@ -2,22 +2,23 @@ package responder
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
 )
 
-func newHttpResponse(w http.ResponseWriter, attributes map[string]interface{}) *HttpResponse {
+func newHttpResponse(w http.ResponseWriter, attributes map[string]string) *HttpResponse {
 	return &HttpResponse{writer: w, attributes: attributes}
 }
 
 type HttpResponse struct {
 	writer     http.ResponseWriter
-	attributes map[string]interface{}
+	attributes map[string]string
 }
 
-func (response *HttpResponse) setAttributes(attributes map[string]interface{}) *HttpResponse {
+func (response *HttpResponse) setAttributes(attributes map[string]string) *HttpResponse {
 	response.attributes = attributes
 	return response
 }
@@ -33,12 +34,12 @@ func (response *HttpResponse) emptyStatus() []int {
 
 // OK respond with http.StatusOK
 func (response *HttpResponse) OK(payload interface{}) {
-	data := map[string]interface{}{
-		"data":  payload,
-		"flash": response.attributes,
+	for k, v := range response.attributes {
+		c := &http.Cookie{Name: k, Value: base64.URLEncoding.EncodeToString([]byte(v))}
+		http.SetCookie(response.writer, c)
 	}
 
-	res, err := json.Marshal(data)
+	res, err := json.Marshal(payload)
 	if err != nil {
 		response.writer.WriteHeader(http.StatusInternalServerError)
 		response.writer.Write([]byte(err.Error()))
