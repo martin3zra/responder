@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 func newHttpResponse(w http.ResponseWriter, attributes map[string]string) *HttpResponse {
@@ -34,10 +35,6 @@ func (response *HttpResponse) emptyStatus() []int {
 
 // OK respond with http.StatusOK
 func (response *HttpResponse) OK(payload interface{}) {
-	for k, v := range response.attributes {
-		c := &http.Cookie{Name: k, Value: base64.URLEncoding.EncodeToString([]byte(v))}
-		http.SetCookie(response.writer, c)
-	}
 
 	res, err := json.Marshal(payload)
 	if err != nil {
@@ -149,6 +146,7 @@ func (response *HttpResponse) Error(err error) {
 }
 
 func (response *HttpResponse) asJSON(statusCode int, stream []byte) {
+	response.registerAttributes()
 	response.writer.Header().Set("Content-Type", "application/json")
 	response.writer.WriteHeader(statusCode)
 
@@ -223,6 +221,19 @@ func (response *HttpResponse) getMessage(err error) []byte {
 	}
 
 	return []byte(err.Error())
+}
+
+func (response *HttpResponse) registerAttributes() {
+	for k, v := range response.attributes {
+		http.SetCookie(response.writer, &http.Cookie{
+			Name:     k,
+			Value:    base64.URLEncoding.EncodeToString([]byte(v)),
+			Expires:  time.Now().Add(time.Second * time.Duration(5)),
+			HttpOnly: false,
+			SameSite: http.SameSiteLaxMode,
+			Path:     "/",
+		})
+	}
 }
 
 // func (response *HttpResponse) getBytes(key interface{}) ([]byte, error) {
