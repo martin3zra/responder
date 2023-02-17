@@ -224,7 +224,12 @@ func (response *HttpResponse) getMessage(err error) []byte {
 }
 
 func (response *HttpResponse) registerAttributes() {
+
 	for k, v := range response.attributes {
+		if k == "success" || k == "error" {
+			response.writer.Header().Set("X-Flash-Messages", v)
+		}
+
 		http.SetCookie(response.writer, &http.Cookie{
 			Name:     k,
 			Value:    base64.URLEncoding.EncodeToString([]byte(v)),
